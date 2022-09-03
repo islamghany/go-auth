@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/islamghany/go-auth/api"
+	db "github.com/islamghany/go-auth/db/sqlc"
 	_ "github.com/lib/pq"
 )
 
@@ -23,7 +24,8 @@ func main() {
 
 	fmt.Println("server is initalized on port 4000")
 
-	server := api.NewServer("islam")
+	store := db.New(conn)
+	server := api.NewServer(store)
 	log.Fatal(server.Start(4000))
 }
 

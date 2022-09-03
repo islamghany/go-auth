@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	db "github.com/islamghany/go-auth/db/sqlc"
 )
 
+type envelope map[string]interface{}
 type Server struct {
-	store  string
-	router http.Handler
+	store *db.Queries
 }
 
-func NewServer(s string) *Server {
+func NewServer(s *db.Queries) *Server {
 	return &Server{
-		store:  s,
-		router: Routes(),
+		store: s,
 	}
 
 }
@@ -22,7 +23,7 @@ func NewServer(s string) *Server {
 func (server *Server) Start(port int) error {
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
-		Handler:      server.router,
+		Handler:      server.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
