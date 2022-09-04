@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
+
+	"log"
 
 	"github.com/islamghany/go-auth/api"
 	db "github.com/islamghany/go-auth/db/sqlc"
@@ -26,6 +27,7 @@ func main() {
 
 	store := db.New(conn)
 	server := api.NewServer(store)
+
 	log.Fatal(server.Start(4000))
 }
 

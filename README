@@ -1,0 +1,37 @@
+# go-auth
+
+an overview of different techniques to implement authentication and authorization in go web application
+
+## Authentication is about confirming who a user is, whereas Authorization is about checking whether that user is premitted to something.
+
+## Authentication
+
+#### different approaches to API Authentication:
+
+- Basic authentication
+- Stateful token authentication
+- Stateless token authentication
+- API key authentication
+- OAuth2.0 / OpenID Client
+
+## Basic Authentication
+
+in this approach, the client include an Authorization header with every request containing their credentials, in the format username:password and base-64 encoded.
+for example to authenticatde `smith@gmail.com:pa55word`
+
+```
+    Authorization: Basic c21pdGhAZ21haWwuY29tOnBhNTV3b3Jk
+```
+
+then you can access the credentials from this header using Go's `Request.BasicAuth()` and verify that they are correct before continue
+
+### pros
+
+- Simple for clients.
+- Is supported out-of-the-box by most programming languages, web browsers, and tools such as curl and wget.
+- It’s often useful in the scenario where your API doesn’t have ‘real’ user accounts.
+
+### cons
+
+- It sends the credentials encoded but not encrypted. This would be completely insecure unless the exchange was over a secure connection (HTTPS/TLS).
+- For APIs with ‘real’ user accounts and — in particular — hashed passwords, it’s not such a great fit. Comparing the password provided by a client against a (slow) hashed password is a deliberately costly operation, and when using HTTP basic authentication you need to do that check for every request. That will create a lot of extra work for your API server and add significant latency to responses.

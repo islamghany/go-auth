@@ -13,7 +13,7 @@ func (server *Server) routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hellow worrld"))
 	})
-	router.HandlerFunc(http.MethodGet, "/:id", server.getUser)
+	router.HandlerFunc(http.MethodGet, "/:id", server.BasicAuthenticationMiddleware(server.getUser))
 
 	return router
 }
