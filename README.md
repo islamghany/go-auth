@@ -2,7 +2,7 @@
 
 an overview of different techniques to implement authentication and authorization in go web application
 
-## Authentication is about confirming who a user is, whereas Authorization is about checking whether that user is premitted to something.
+### Authentication is about confirming who a user is, whereas Authorization is about checking whether that user is premitted to something.
 
 ## Authentication
 
@@ -13,6 +13,8 @@ an overview of different techniques to implement authentication and authorizatio
 - Stateless token authentication
 - API key authentication
 - OAuth2.0 / OpenID Client
+
+---
 
 ## Basic Authentication
 
@@ -35,3 +37,34 @@ then you can access the credentials from this header using Go's `Request.BasicAu
 
 - It sends the credentials encoded but not encrypted. This would be completely insecure unless the exchange was over a secure connection (HTTPS/TLS).
 - For APIs with ‘real’ user accounts and — in particular — hashed passwords, it’s not such a great fit. Comparing the password provided by a client against a (slow) hashed password is a deliberately costly operation, and when using HTTP basic authentication you need to do that check for every request. That will create a lot of extra work for your API server and add significant latency to responses.
+
+---
+
+## Token Authentication (AKA bearer token authentication)
+
+1. The client sends a request for the server with his credentials(username or email, password) _the login step_.
+
+2. then the server verify that the credentials are correct then generates a _bearer token_ which
+   represents the user, and sends it back to the user, the token expires after specified time, after that the user will resubmit his credentials to get a new token.
+3. for subsequent requests to the server the client will include the token in the Authorization header like this
+
+```
+    Authorization: Bearer <token>
+```
+
+4. when the server receive the request it examines the token, checks if it hasn't expired, the token value determine who the user is.
+
+### pros
+
+- for APIs where user's pasword are hashed, this approach is better than the basic authentication, because the in the basic auth the hashed password must be evaluated in every request that causes leak in the performance.
+
+### cons
+
+- the downside is that managing the token can be complicated for the clients, they will need to implement the necessary logic for token caching, momonitoring and managing token expiry, and periodically generating new tokens
+
+<i>
+    <strong>we can break down token authentication further into two sub-type: Statful and Statless token authentication.</strong>
+</i>
+<br />
+
+## Stateful Token Authentication
