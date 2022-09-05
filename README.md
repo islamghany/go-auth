@@ -68,3 +68,17 @@ then you can access the credentials from this header using Go's `Request.BasicAu
 <br />
 
 ## Stateful Token Authentication
+
+In stateful token auhtencation approach, the value of the token is high-entorpy cryptographically-secure random string, this token _or fast hash of it_ is stored server-side in a database alongside with userID and and an expiry time for the token.
+
+When a user sends the token with the subsequent requests the server lookup in database for that token, check that it hasn't expired, and retrieve the corresponding userID to find out who is the request coming from.
+
+### pros
+
+- API maintanes control ovwe the token, it very trival to get the token from the database and deleting them or make mark then expired.
+
+- it also simple and robust, the security is provided by the token being _unguessable_ which is why it's important to use high-entopy cryptographiclly-secure random string.
+
+### cons
+
+- it will need to a databse lookup, a high number could be database lookup negative, but in muse cases you will need to databse lookup to check the user's activation status or retrieve additional information.

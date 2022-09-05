@@ -8,6 +8,13 @@ import (
 	"time"
 )
 
+type Token struct {
+	HashedToken []byte    `json:"hashed_token"`
+	UserID      int64     `json:"user_id"`
+	Scope       string    `json:"scope"`
+	Expiry      time.Time `json:"expiry"`
+}
+
 type User struct {
 	ID             int64     `json:"id"`
 	CreatedAt      time.Time `json:"created_at"`

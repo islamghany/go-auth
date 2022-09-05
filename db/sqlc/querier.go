@@ -10,7 +10,11 @@ import (
 
 type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	DeleteAllTokensForUser(ctx context.Context, arg DeleteAllTokensForUserParams) error
 	GetUser(ctx context.Context, id int64) (User, error)
+	GetUserEmail(ctx context.Context, email string) (User, error)
+	GetUserFromToken(ctx context.Context, arg GetUserFromTokenParams) (User, error)
+	InsertToken(ctx context.Context, arg InsertTokenParams) error
 }
 
 var _ Querier = (*Queries)(nil)

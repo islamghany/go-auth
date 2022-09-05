@@ -35,3 +35,6 @@ func (server *Server) unauthorizedResponse(w http.ResponseWriter, r *http.Reques
 	message := "invalid credentials"
 	server.errorResponse(w, r, http.StatusUnauthorized, message)
 }
+func (serve *Server) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
+	serve.errorResponse(w, r, http.StatusBadRequest, err.Error())
+}

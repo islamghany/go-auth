@@ -61,3 +61,49 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 	)
 	return i, err
 }
+
+const getUserEmail = `-- name: GetUserEmail :one
+SELECT id, created_at, name, email, hashed_password, activated, version FROM users
+WHERE email = $1
+`
+
+func (q *Queries) GetUserEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.Name,
+		&i.Email,
+		&i.HashedPassword,
+		&i.Activated,
+		&i.Version,
+	)
+	return i, err
+}
+
+const getUserFromToken = `-- name: GetUserFromToken :one
+select users.id, users.created_at, users.name, users.email, users.hashed_password, users.activated, users.version from tokens join users on users.id = tokens.user_id
+where tokens.hashed_token = $1 and tokens.scope = $2 and tokens.expiry > $3
+`
+
+type GetUserFromTokenParams struct {
+	HashedToken []byte    `json:"hashed_token"`
+	Scope       string    `json:"scope"`
+	Expiry      time.Time `json:"expiry"`
+}
+
+func (q *Queries) GetUserFromToken(ctx context.Context, arg GetUserFromTokenParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserFromToken, arg.HashedToken, arg.Scope, arg.Expiry)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.Name,
+		&i.Email,
+		&i.HashedPassword,
+		&i.Activated,
+		&i.Version,
+	)
+	return i, err
+}
