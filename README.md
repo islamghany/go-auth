@@ -79,6 +79,27 @@ When a user sends the token with the subsequent requests the server lookup in da
 
 - it also simple and robust, the security is provided by the token being _unguessable_ which is why it's important to use high-entopy cryptographiclly-secure random string.
 
+- Stateful authentication tokens are a nice fit for APIs that act as the back-end for a website or single-page application, as there is a natural moment when the user logs-in where they can be exchanged for user credentials.
+
 ### cons
 
 - it will need to a databse lookup, a high number could be database lookup negative, but in muse cases you will need to databse lookup to check the user's activation status or retrieve additional information.
+
+## Stateless Token Authentication
+
+Stateless tokens encode user's id and expiry time in the token itself the token is crytpographically signed to prevwnt tampering and in some cases encrypted to prevent the content being read.
+<br/>
+
+There are a few different technologies that you can use to create stateless tokens, encoding the information in JWT(json web token,PASETO).
+
+### pros
+
+- the work to encode and decode the tokens can be done in memory with db lookups, and the information required in the token itself.
+
+- If you require delegated authentication, such as when your API has a microservice architecture with different services for performing authentication and performing other tasks, then use stateless authentication tokens.
+
+### cons
+
+- they can't be easily revoked once they are issued. (we can change the secret user for signing your token, forcing all user's to re-authenticate).
+
+- Because of these downsides, stateless tokens — and JWTs in particular — are generally not the best choice for managing authentication in most API applications.
