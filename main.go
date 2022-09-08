@@ -13,9 +13,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Your secret key should be a cryptographically secure random string with an underlying entropy of at least 32 bytes (256 bits).
-const JWT_SECRET = "pei3einoh0Beem6uM6Ungohn2heiv5lah1ael4joopie5JaigeikoozaoTew2Eh6"
-
 func main() {
 
 	conn, err := openDB()
