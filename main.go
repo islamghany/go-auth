@@ -26,8 +26,10 @@ func main() {
 	fmt.Println("server is initalized on port 4000")
 
 	store := db.New(conn)
-	server := api.NewServer(store)
-
+	server, err := api.NewServer(store)
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Fatal(server.Start(4000))
 }
 

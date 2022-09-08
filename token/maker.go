@@ -15,7 +15,9 @@ type Maker interface {
 	VerifyToken(token string) (*Payload, error)
 }
 
-func MissureApproach(maker Maker) {
+// after running this function on both approaches (JWT, PASETO)
+// it turns out that Paseto is more faster then the jwt method.
+func MeasureApproach(maker Maker) {
 	t1 := time.Now()
 	t, err := maker.CreateToken("islam", time.Minute)
 	if err != nil {

@@ -5,9 +5,6 @@ import (
 	"database/sql"
 	"net/http"
 	"time"
-
-	db "github.com/islamghany/go-auth/db/sqlc"
-	"github.com/islamghany/go-auth/utils"
 )
 
 const (
@@ -54,13 +51,16 @@ func (server *Server) CreateAuthenticationToken(w http.ResponseWriter, r *http.R
 	//     return
 	// }
 
-	token, err := utils.GenerateHighEntropyCryptographicallyRandomString(user.ID, 3*24*time.Hour, ScopeActivation)
-	err = server.store.InsertToken(context.Background(), db.InsertTokenParams{
-		HashedToken: token.Hash,
-		UserID:      token.UserID,
-		Expiry:      token.Expiry,
-		Scope:       token.Scope,
-	})
+	// token, err := utils.GenerateHighEntropyCryptographicallyRandomString(user.ID, 3*24*time.Hour, ScopeActivation)
+	// err = server.store.InsertToken(context.Background(), db.InsertTokenParams{
+	// 	HashedToken: token.Hash,
+	// 	UserID:      token.UserID,
+	// 	Expiry:      token.Expiry,
+	// 	Scope:       token.Scope,
+	// })
+
+	token, err := server.token.CreateToken(user.Email, time.Hour)
+
 	if err != nil {
 		server.serverErrorResponse(w, r, err)
 		return
