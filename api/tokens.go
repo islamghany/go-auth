@@ -8,6 +8,7 @@ import (
 
 	db "github.com/islamghany/go-auth/db/sqlc"
 	"github.com/islamghany/go-auth/utils"
+	"github.com/tomasen/realip"
 )
 
 const (
@@ -21,6 +22,63 @@ type loginPayload struct {
 	Password string `json:"password"`
 }
 
+func (server *Server) renewAccessToken(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	err := server.readJSON(w, r, &input)
+	if err != nil {
+		server.badRequestResponse(w, r, err)
+		return
+	}
+
+	refreshPayload, err := server.token.VerifyToken(input.RefreshToken)
+	if err != nil {
+		server.unauthorizedResponse(w, r)
+		return
+	}
+	session, err := server.store.GetSession(context.Background(), refreshPayload.ID)
+
+	if err != nil {
+		switch {
+		case err == sql.ErrNoRows:
+			server.unauthorizedResponse(w, r)
+		default:
+			server.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	if session.UserID != refreshPayload.UserID {
+		server.unauthorizedResponse(w, r)
+		return
+	}
+	if session.RefreshToken != input.RefreshToken {
+		server.unauthorizedResponse(w, r)
+		return
+	}
+
+	if time.Now().After(session.ExpiresAt) {
+		server.unauthorizedResponse(w, r)
+		return
+	}
+	accessToken, accessTokenPayLoad, err := server.token.CreateToken(session.UserID, 15*time.Minute)
+	if err != nil {
+		server.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = server.writeJson(w, http.StatusCreated, envelope{
+		"access_token":            accessToken,
+		"access_token_expires_at": accessTokenPayLoad.ExpiredAt,
+	}, nil)
+
+	if err != nil {
+		server.serverErrorResponse(w, r, err)
+		return
+	}
+}
 func (server *Server) CreateAuthenticationTokenWithRenewToken(w http.ResponseWriter, r *http.Request) {
 	input := loginPayload{}
 
@@ -73,8 +131,8 @@ func (server *Server) CreateAuthenticationTokenWithRenewToken(w http.ResponseWri
 		UserID:       user.ID,
 		RefreshToken: refresh,
 		ExpiresAt:    refreshPayLoad.ExpiredAt,
-		UserAgent:    "",
-		UserIp:       "",
+		UserAgent:    r.UserAgent(),
+		UserIp:       realip.FromRequest(r),
 	})
 
 	if err != nil {

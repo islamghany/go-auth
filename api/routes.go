@@ -21,5 +21,6 @@ func (server *Server) routes() http.Handler {
 	router.HandlerFunc(http.MethodPost, "/token/authenticate/stateful", server.CreateAuthenticationToken)
 	router.HandlerFunc(http.MethodPost, "/register", server.registerUser)
 	router.HandlerFunc(http.MethodPost, "/token/authenticate/stateless-with-refresh-token", server.CreateAuthenticationTokenWithRenewToken)
-	return server.StatelessTokenAuthenticationMiddleware(router)
+	router.HandlerFunc(http.MethodPost, "/token/authenticate/renew-access-token", server.renewAccessToken)
+	return router
 }
