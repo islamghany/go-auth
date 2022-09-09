@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"net/http"
 	"time"
+
+	db "github.com/islamghany/go-auth/db/sqlc"
+	"github.com/islamghany/go-auth/utils"
 )
 
 const (
@@ -13,11 +16,98 @@ const (
 	ScopeAuthorization  = "authorization"
 )
 
-func (server *Server) CreateAuthenticationToken(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+type loginPayload struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (server *Server) CreateAuthenticationTokenWithRenewToken(w http.ResponseWriter, r *http.Request) {
+	input := loginPayload{}
+
+	err := server.readJSON(w, r, &input)
+
+	if err != nil {
+		server.badRequestResponse(w, r, err)
+		return
 	}
+	user, err := server.store.GetUserEmail(context.Background(), input.Email)
+
+	if err != nil {
+		switch {
+		case err == sql.ErrNoRows:
+			server.unauthorizedResponse(w, r)
+		default:
+			server.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+	// Check if the provided password matches the actual password for the user.
+	match, err := utils.Matches(input.Password, user.HashedPassword)
+	if err != nil {
+		server.serverErrorResponse(w, r, err)
+		return
+	}
+	// If the passwords don't match, then we call the app.invalidCredentialsResponse()
+	// helper again and return.
+	if !match {
+		server.unauthorizedResponse(w, r)
+		return
+	}
+
+	// creating access token for the user with short life time
+	accessToken, accessTokenPayLoad, err := server.token.CreateToken(user.ID, 15*time.Minute)
+	if err != nil {
+		server.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// creating refresh  token for the user with long life time
+	refresh, refreshPayLoad, err := server.token.CreateToken(user.ID, 24*time.Hour*30)
+	if err != nil {
+		server.serverErrorResponse(w, r, err)
+		return
+	}
+
+	session, err := server.store.InsertSession(context.TODO(), db.InsertSessionParams{
+		ID:           refreshPayLoad.ID,
+		UserID:       user.ID,
+		RefreshToken: refresh,
+		ExpiresAt:    refreshPayLoad.ExpiredAt,
+		UserAgent:    "",
+		UserIp:       "",
+	})
+
+	if err != nil {
+		server.serverErrorResponse(w, r, err)
+		return
+	}
+
+	/*
+			type loginUserResponse struct {
+			SessionID             uuid.UUID    `json:"session_id"`
+			AccessToken           string       `json:"access_token"`
+			AccessTokenExpiresAt  time.Time    `json:"access_token_expires_at"`
+			RefreshToken          string       `json:"refresh_token"`
+			RefreshTokenExpiresAt time.Time    `json:"refresh_token_expires_at"`
+			User                  db.User 	   `json:"user"`
+		}
+	*/
+	err = server.writeJson(w, http.StatusCreated, envelope{
+		"user":                     user,
+		"session_id":               session.ID,
+		"access_token":             accessToken,
+		"access_token_expires_at":  accessTokenPayLoad.ExpiredAt,
+		"refresh_token":            refresh,
+		"refresh_token_expires_at": refreshPayLoad.ExpiredAt,
+	}, nil)
+
+	if err != nil {
+		server.serverErrorResponse(w, r, err)
+		return
+	}
+}
+func (server *Server) CreateAuthenticationToken(w http.ResponseWriter, r *http.Request) {
+	input := loginPayload{}
 
 	err := server.readJSON(w, r, &input)
 
@@ -59,7 +149,7 @@ func (server *Server) CreateAuthenticationToken(w http.ResponseWriter, r *http.R
 	// 	Scope:       token.Scope,
 	// })
 
-	token, err := server.token.CreateToken(user.Email, time.Hour)
+	token, _, err := server.token.CreateToken(user.ID, time.Hour)
 
 	if err != nil {
 		server.serverErrorResponse(w, r, err)

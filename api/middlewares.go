@@ -148,7 +148,7 @@ func (server *Server) StatelessTokenAuthenticationMiddleware(next http.Handler) 
 			return
 		}
 		fmt.Println(p)
-		user, err := server.store.GetUserEmail(context.Background(), p.Username)
+		user, err := server.store.GetUser(context.Background(), p.UserID)
 		fmt.Println(err)
 		if err != nil {
 			switch {
