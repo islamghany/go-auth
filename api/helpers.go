@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -95,4 +96,28 @@ func (server *Server) readJSON(w http.ResponseWriter, r *http.Request, dest inte
 	}
 
 	return nil
+}
+
+func (server *Server) setCooke(w http.ResponseWriter, name, value, path string, ttl time.Time) {
+
+	cookie := &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     path,
+		HttpOnly: true,
+		Expires:  ttl,
+		Secure:   true,
+	}
+
+	http.SetCookie(w, cookie)
+}
+
+func (server *Server) removeCookie(w http.ResponseWriter, name string) {
+	cookie := http.Cookie{
+		Name:    name,
+		Value:   "",
+		Path:    "/",
+		Expires: time.Unix(0, 0),
+	}
+	http.SetCookie(w, &cookie)
 }

@@ -150,12 +150,14 @@ func (server *Server) CreateAuthenticationTokenWithRenewToken(w http.ResponseWri
 			User                  db.User 	   `json:"user"`
 		}
 	*/
+
+	server.setCooke(w, "access_token", accessToken, "/", accessTokenPayLoad.ExpiredAt)
+	server.setCooke(w, "refresh_token", refresh, "/token/authenticate/renew-access-token", refreshPayLoad.ExpiredAt)
+
 	err = server.writeJson(w, http.StatusCreated, envelope{
 		"user":                     user,
 		"session_id":               session.ID,
-		"access_token":             accessToken,
 		"access_token_expires_at":  accessTokenPayLoad.ExpiredAt,
-		"refresh_token":            refresh,
 		"refresh_token_expires_at": refreshPayLoad.ExpiredAt,
 	}, nil)
 
