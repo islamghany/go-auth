@@ -2,6 +2,7 @@ import axios from "../../api/api";
 import React, { forwardRef, useRef } from "react";
 import styled from "styled-components";
 import { useApi, Status } from "../../hooks/useApi";
+import { useUserSelector } from "../../context/user";
 const StyledInput = styled.input`
   width: 100%;
   border: 1px solid #ccc;
@@ -25,9 +26,11 @@ const TextInput = forwardRef(({ name, placeholder, type }, ref) => {
 });
 
 export default function Login() {
-  const { status, data, error, exec } = useApi((e) =>
-    axios.post("/token/authenticate/stateless-with-refresh-token", e)
-  );
+  const setUser = useUserSelector((ctx) => ctx.setUser);
+  const { status, error, exec } = useApi((e) => {
+    console.log(Date.now());
+    return axios.post("/token/authenticate/stateless-with-refresh-token", e);
+  });
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
   const onSubmit = async (e) => {
@@ -37,7 +40,9 @@ export default function Login() {
         email: emailRef.current.value,
         password: passwordRef.current.value,
       });
-      console.log(res);
+      if (res.error === null) {
+        setUser(res.data.data.user);
+      }
     }
   };
   return (
