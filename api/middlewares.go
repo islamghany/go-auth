@@ -164,9 +164,7 @@ func (server *Server) StatelessTokenAuthenticationMiddleware(next http.Handler) 
 			server.unauthorizedResponse(w, r)
 			return
 		}
-		fmt.Println(p)
 		user, err := server.store.GetUser(context.Background(), p.UserID)
-		fmt.Println(err)
 		if err != nil {
 			switch {
 			case err == sql.ErrNoRows:
@@ -180,6 +178,36 @@ func (server *Server) StatelessTokenAuthenticationMiddleware(next http.Handler) 
 		// Call the contextSetUser() helper to add the user information to the request
 		// context.
 		r = server.contextSetUser(r, &user)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (server *Server) requireAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := server.contextGetUser(r)
+
+		// check if the user is authenticated
+		if user == AnonymousUser {
+			// the usrer is not authenticated
+			// return the user is premitted to enter that path.
+			server.unauthorizedResponse(w, r)
+			return
+			// // check
+			// cookie, err := r.Cookie("refresh_token")
+			// if err != nil {
+			// 	server.unauthorizedResponse(w,r)
+			// 	return
+			// }
+			// p, err := server.token.VerifyToken(cookie.Value)
+			// if err != nil {
+
+			// 	server.unauthorizedResponse(w, r)
+			// 	return
+			// }
+
+		}
+
+		// else the user is authenticated
 		next.ServeHTTP(w, r)
 	})
 }

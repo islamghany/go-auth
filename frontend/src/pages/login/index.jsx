@@ -3,6 +3,7 @@ import React, { forwardRef, useRef } from "react";
 import styled from "styled-components";
 import { useApi, Status } from "../../hooks/useApi";
 import { useUserSelector } from "../../context/user";
+import { storeRefreshTokenExpiration } from "../../helpers/refreshToken";
 const StyledInput = styled.input`
   width: 100%;
   border: 1px solid #ccc;
@@ -41,6 +42,8 @@ export default function Login() {
         password: passwordRef.current.value,
       });
       if (res.error === null) {
+        console.log(res.data.data.user, res.data.data);
+        storeRefreshTokenExpiration(res.data.data.refresh_token_expires_at);
         setUser(res.data.data.user);
       }
     }

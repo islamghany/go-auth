@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -23,21 +24,20 @@ type loginPayload struct {
 }
 
 func (server *Server) renewAccessToken(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		RefreshToken string `json:"refresh_token"`
-	}
-
-	err := server.readJSON(w, r, &input)
-	if err != nil {
-		server.badRequestResponse(w, r, err)
-		return
-	}
-
-	refreshPayload, err := server.token.VerifyToken(input.RefreshToken)
+	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
 		server.unauthorizedResponse(w, r)
 		return
 	}
+
+	refreshPayload, err := server.token.VerifyToken(cookie.Value)
+	if err != nil {
+		server.removeCookie(w, "refresh_token")
+		server.unauthorizedResponse(w, r)
+		return
+	}
+
+	fmt.Println(refreshPayload)
 	session, err := server.store.GetSession(context.Background(), refreshPayload.ID)
 
 	if err != nil {
@@ -54,7 +54,7 @@ func (server *Server) renewAccessToken(w http.ResponseWriter, r *http.Request) {
 		server.unauthorizedResponse(w, r)
 		return
 	}
-	if session.RefreshToken != input.RefreshToken {
+	if session.RefreshToken != cookie.Value {
 		server.unauthorizedResponse(w, r)
 		return
 	}
@@ -63,12 +63,12 @@ func (server *Server) renewAccessToken(w http.ResponseWriter, r *http.Request) {
 		server.unauthorizedResponse(w, r)
 		return
 	}
-	accessToken, accessTokenPayLoad, err := server.token.CreateToken(session.UserID, 15*time.Minute)
+	accessToken, accessTokenPayLoad, err := server.token.CreateToken(session.UserID, 30*time.Second)
 	if err != nil {
 		server.serverErrorResponse(w, r, err)
 		return
 	}
-
+	server.setCooke(w, "access_token", accessToken, "/", accessTokenPayLoad.ExpiredAt)
 	err = server.writeJson(w, http.StatusCreated, envelope{
 		"access_token":            accessToken,
 		"access_token_expires_at": accessTokenPayLoad.ExpiredAt,

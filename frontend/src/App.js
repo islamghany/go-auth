@@ -5,9 +5,17 @@ import Login from "./pages/login";
 import ProtectedRoute from "./helpers/ProtectedRoute";
 import UserContext from "./context/user";
 import WithAuth from "./helpers/WithAuth";
-
+import { useApi } from "./hooks/useApi";
+import axios from "./api/api";
 const PP = () => {
-  return <h1>This is Protected Path</h1>;
+  const { status } = useApi(
+    () => axios.get("/protected-resources").then((res) => res.data),
+    {
+      enabled: true,
+      onSettled: (e) => console.log(e),
+    }
+  );
+  return <h1>This is Protected Path {status}</h1>;
 };
 function App() {
   return (

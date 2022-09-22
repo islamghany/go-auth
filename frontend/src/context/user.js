@@ -4,7 +4,7 @@ import contextFactory from "./contextFactory";
 const [UContext, useUserContext, useUserSelector] = contextFactory();
 
 const UserContext = ({ children }) => {
-  const [user, setUser] = useState({ id: -1 });
+  const [user, setUser] = useState({});
 
   let u = useMemo(() => user, []);
 
